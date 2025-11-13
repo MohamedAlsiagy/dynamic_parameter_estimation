@@ -1,0 +1,24 @@
+num_robots_in_experiment: 512
+initial_robot_index: 361
+num_trajectory_points_per_robot: 16
+skip_generated_robots: true
+
+intermediate_position_tolerance: 0.5
+target_position_tolerance: 0.5
+target_velocity_tolerance: 0.25
+
+interpolation_steps: 12
+coulomb_friction_coeff_range: [0.0, 0.5]
+coulomb_friction_decay_factor: 0.625
+viscous_friction_coeff_range: [0.0, 0.1]
+timeout_trajectory_point: 12
+dataset_output_dir: "/root/ws/src/torque_controlled_arm/dataset_p7"
+robots_dir: "/root/ws/src/torque_controlled_arm/robots_p7"
+
+min_update_rate: 300  # Minimum update rate in Hz to consider not stuck
+print_frequency: 25   # How often to print updates (in iterations)
+sampling_frequency: 1
+pid_velocity_limit_over_pi : 3
+interpolated_steps_latency_percentage : 0.5
+max_failed_trajectories_per_robot : 2
+reset_gazebo_every : 4

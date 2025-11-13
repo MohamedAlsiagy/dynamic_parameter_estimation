@@ -1,0 +1,131 @@
+std_threshold: 1.0e-06
+total_columns: 144
+dynamic_columns: 91
+constant_columns: 53
+dynamic_column_stats:
+  jacobians:
+    link_2:
+      joint_1:
+        joint_1_link_2_dwx_dj: 0.702914
+        joint_1_link_2_dwy_dj: 0.691666
+    link_3:
+      joint_0:
+        joint_0_link_3_dx_dj: 0.139129
+        joint_0_link_3_dy_dj: 0.148416
+      joint_1:
+        joint_1_link_3_dwx_dj: 0.702914
+        joint_1_link_3_dwy_dj: 0.691666
+        joint_1_link_3_dx_dj: 0.226472
+        joint_1_link_3_dy_dj: 0.239441
+        joint_1_link_3_dz_dj: 0.18489
+      joint_2:
+        joint_2_link_3_dwx_dj: 0.702914
+        joint_2_link_3_dwy_dj: 0.691666
+    link_4:
+      joint_0:
+        joint_0_link_4_dx_dj: 0.301898
+        joint_0_link_4_dy_dj: 0.303192
+      joint_1:
+        joint_1_link_4_dwx_dj: 0.702914
+        joint_1_link_4_dwy_dj: 0.691666
+        joint_1_link_4_dx_dj: 0.336238
+        joint_1_link_4_dy_dj: 0.330821
+        joint_1_link_4_dz_dj: 0.38943
+      joint_2:
+        joint_2_link_4_dwx_dj: 0.702914
+        joint_2_link_4_dwy_dj: 0.691666
+        joint_2_link_4_dx_dj: 0.122144
+        joint_2_link_4_dy_dj: 0.104773
+        joint_2_link_4_dz_dj: 0.252288
+      joint_3:
+        joint_3_link_4_dwx_dj: 0.566969
+        joint_3_link_4_dwy_dj: 0.601279
+        joint_3_link_4_dwz_dj: 0.282758
+    link_5:
+      joint_0:
+        joint_0_link_5_dx_dj: 0.380161
+        joint_0_link_5_dy_dj: 0.376782
+      joint_1:
+        joint_1_link_5_dwx_dj: 0.702914
+        joint_1_link_5_dwy_dj: 0.691666
+        joint_1_link_5_dx_dj: 0.385097
+        joint_1_link_5_dy_dj: 0.371757
+        joint_1_link_5_dz_dj: 0.489915
+      joint_2:
+        joint_2_link_5_dwx_dj: 0.702914
+        joint_2_link_5_dwy_dj: 0.691666
+        joint_2_link_5_dx_dj: 0.173997
+        joint_2_link_5_dy_dj: 0.149251
+        joint_2_link_5_dz_dj: 0.359391
+      joint_3:
+        joint_3_link_5_dwx_dj: 0.566969
+        joint_3_link_5_dwy_dj: 0.601279
+        joint_3_link_5_dwz_dj: 0.282758
+      joint_4:
+        joint_4_link_5_dwx_dj: 0.601454
+        joint_4_link_5_dwy_dj: 0.58569
+        joint_4_link_5_dwz_dj: 0.510271
+    link_6:
+      joint_0:
+        joint_0_link_6_dx_dj: 0.426601
+        joint_0_link_6_dy_dj: 0.415275
+      joint_1:
+        joint_1_link_6_dwx_dj: 0.702914
+        joint_1_link_6_dwy_dj: 0.691666
+        joint_1_link_6_dx_dj: 0.382054
+        joint_1_link_6_dy_dj: 0.378899
+        joint_1_link_6_dz_dj: 0.555109
+      joint_2:
+        joint_2_link_6_dwx_dj: 0.702914
+        joint_2_link_6_dwy_dj: 0.691666
+        joint_2_link_6_dx_dj: 0.181351
+        joint_2_link_6_dy_dj: 0.162304
+        joint_2_link_6_dz_dj: 0.423709
+      joint_3:
+        joint_3_link_6_dwx_dj: 0.566969
+        joint_3_link_6_dwy_dj: 0.601279
+        joint_3_link_6_dwz_dj: 0.282758
+        joint_3_link_6_dx_dj: 0.049232
+        joint_3_link_6_dy_dj: 0.054823
+        joint_3_link_6_dz_dj: 0.04833
+      joint_4:
+        joint_4_link_6_dwx_dj: 0.601454
+        joint_4_link_6_dwy_dj: 0.58569
+        joint_4_link_6_dwz_dj: 0.510271
+        joint_4_link_6_dx_dj: 0.074717
+        joint_4_link_6_dy_dj: 0.070645
+        joint_4_link_6_dz_dj: 0.084888
+      joint_5:
+        joint_5_link_6_dwx_dj: 0.526383
+        joint_5_link_6_dwy_dj: 0.585514
+        joint_5_link_6_dwz_dj: 0.552315
+  joints:
+    joint_0:
+      joint_0_position: 2.107551
+      joint_0_torque: 2.455646
+      joint_0_velocity: 2.75254
+    joint_1:
+      joint_1_position: 0.512129
+      joint_1_torque: 15.522206
+      joint_1_velocity: 1.443085
+    joint_2:
+      joint_2_position: 0.867487
+      joint_2_torque: 8.308445
+      joint_2_velocity: 2.16219
+    joint_3:
+      joint_3_position: 1.327561
+      joint_3_torque: 0.43685
+      joint_3_velocity: 1.868489
+    joint_4:
+      joint_4_position: 1.110285
+      joint_4_torque: 0.749354
+      joint_4_velocity: 2.943253
+    joint_5:
+      joint_5_position: 1.634429
+      joint_5_torque: 0.144358
+      joint_5_velocity: 2.004183
+  links: {}
+constant_column_stats:
+  jacobians: {}
+  joints: {}
+  links: {}

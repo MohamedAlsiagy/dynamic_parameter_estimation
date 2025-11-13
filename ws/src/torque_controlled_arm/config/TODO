@@ -1,0 +1,18 @@
+finish debugging thread faliure when controller node encounter faliure
+unload and reload robot only when internal faliure to prevent multiple instances of controllers
+if robot has three faliures then skip it
+using wsBuild.bash remove all loaded ros nodes
+change the update rate of the dataset to be around 200Hz
+make saving robots from robot making script get a summary at the end to be able to be recreated
+make the colsions for the circular profile square profile as it consumes uch of cpu and slows update rate
+  - may be make all square but stp files are based on differant shape profiles
+make pid control velocity profile for smoother motion
+make another progree bar for trajectories completed for robot ex: 4/16
+make an rviz visualizer to make sure that the simulations are right
+make gazebo colors the same as generated in urdf?
+  - this to make comparing easier
+  - proobably have to change the arm maker script for that to add another file
+make just one controller and make all the robots read from it and modify it dynamically , by this way when redoing a robot you would be able to make a namespace like robot_0_3
+
+
+

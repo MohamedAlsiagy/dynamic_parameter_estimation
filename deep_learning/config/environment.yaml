@@ -1,0 +1,20 @@
+name: dlenv
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10  # Based on the .pyc file, Python 3.10 was used
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=12.4  # Assuming CPU-only for general environment creation
+  - numpy
+  - scikit-learn
+  - tqdm
+  - scipy
+  - pip
+  - pip:
+    - wandb
+
+

@@ -1,0 +1,22 @@
+# # During validation or testing
+    # if mode == "test" or epoch % 10 == 0:
+    #     for i in range(all_targets.shape[1]):  # Loop over each joint parameter
+    #         # Extract unique ground truth values for this joint parameter
+    #         unique_targets, inverse_indices = torch.unique(all_targets[:, i], return_inverse=True)
+            
+    #         # Aggregate predictions (e.g., mean) for each unique ground truth value
+    #         aggregated_preds = torch.zeros_like(unique_targets)  # Initialize aggregated predictions
+    #         for idx, target in enumerate(unique_targets):
+    #             # Find all predictions corresponding to this unique ground truth value
+    #             preds_for_target = all_preds[inverse_indices == idx, i]
+    #             # Aggregate predictions (e.g., take the mean)
+    #             aggregated_preds[idx] = torch.mean(preds_for_target)
+
+    #         # Log unique ground truth values and aggregated predictions
+    #         wandb.log({f"{mode}_GT_vs_Pred_Param_{i}_fold_{fold}_epoch_{epoch}": wandb.plot.scatter(
+    #             wandb.Table(
+    #                 data=[[x, y] for x, y in zip(unique_targets.cpu().numpy(), aggregated_preds.detach().cpu().numpy())],
+    #                 columns=["GT", "Pred"]
+    #             ),
+    #             "GT", "Pred"
+    #         )})

@@ -1,0 +1,2 @@
+I will make a  model which is responsable for predicting how well is the prediction for a specific model , by using this model I will be only choosing some of the trajectory to do the validation and the evaluation.
+This model is trained on another trained model.

@@ -1,0 +1,43 @@
+Deep learning
+  make a model out of mamba architicture
+  to make the dataset bigger do I apply link transformations to the inertia matrix as it is defined to the zero's frame? is that more fair?
+  integrate the kinematics somewhere in the process , maybe in the data preprocessor. maybe I can add link positions , orientations , velocities , angular velocities
+  One good idea is to use laplace transform , or fourier transformer because some how it converts temporal data to frequency related identification that can be limited
+  normalize dynamic parameters as differant scales may lead to biases 
+    # Standardize targets
+        y_mean = y_train.mean(axis=0)
+        y_std = y_train.std(axis=0)
+        y_train_norm = (y_train - y_mean) / y_std
+
+    # Then, during inference:
+        y_pred_actual = y_pred_norm * y_std + y_mean
+
+
+  CLIP encoder
+  Transformers are more targeted to discreate data , mamba and s4 are more targeted to temporal data.
+    - can I use both. for the temporal compuations i use mamba/s4 and for the joint interactions I use transformers?
+  s4 model can train on differant sampling rates , may be train it multible times for that
+
+  try adding any type of transformations as inputs to the model , currently I supply jacobian which is enough?
+
+ideas:
+1) to make the model gain more information , give it kinematic inputs (1) and make it predict torques (2) first and calculate loss and then use real (1) and (2) to predict the system dynamics using somehow the same route or simmilar route and calcuate the second loss and the total loss will be sum of the two
+2) try one time with link params , one time with jacobians and third with both
+3) use CLIP like contastive learning as following
+  - make contastive learning between encoded input features (maybe encode kinematics and torques separatly) and the dynamic parameters
+  - but the trick here is to make an autoencoder for the dynamic parameters , and the losses of contrastive learneing and the autoencoder is managed together
+  - if this structure worked that it
+  - maybe make the encoders out of SSms or mamba
+
+
+
+
+
+Urgent:
+  - currently I deleted joint axis , add it when you need and see if it will add any differance
+  - sampling for deep learning data is not working 
+  - filter out unpredicatable outputs from the jacobian matrix.
+  - make the a workspace diagram of the best reads and validations
+  - include com_z and make sure that cordinates are same
+  - reduce the epochs and do a comparison for hyperparameter selecten sequence length
+  - make the effective seqnce length to include 1 second , 2 , 3 ,4

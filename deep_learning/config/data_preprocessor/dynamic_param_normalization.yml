@@ -1,0 +1,178 @@
+groups:
+  link_0_inertia:
+    min: -1.1152110939772749e-17
+    max: 0.0051546255094468
+    columns:
+    - link_0_ixx
+    - link_0_ixy
+    - link_0_ixz
+    - link_0_iyy
+    - link_0_iyz
+    - link_0_izz
+  link_0_com:
+    min: -5.92394171463347e-16
+    max: 0.0861388418396349
+    columns:
+    - link_0_com_x
+    - link_0_com_y
+    - link_0_com_z
+  link_1_inertia:
+    min: -3.2854845770617576e-11
+    max: 0.0050821309642416
+    columns:
+    - link_1_ixx
+    - link_1_ixy
+    - link_1_ixz
+    - link_1_iyy
+    - link_1_iyz
+    - link_1_izz
+  link_1_com:
+    min: -3.1430286422551114e-10
+    max: 0.0620674913989288
+    columns:
+    - link_1_com_x
+    - link_1_com_y
+    - link_1_com_z
+  link_2_inertia:
+    min: -6.418769456970345e-10
+    max: 0.0534730426403273
+    columns:
+    - link_2_ixx
+    - link_2_ixy
+    - link_2_ixz
+    - link_2_iyy
+    - link_2_iyz
+    - link_2_izz
+  link_2_com:
+    min: -1.865731642801893e-09
+    max: 0.2072576089741471
+    columns:
+    - link_2_com_x
+    - link_2_com_y
+    - link_2_com_z
+  link_3_inertia:
+    min: -4.4467137342934666e-10
+    max: 0.0251850000379155
+    columns:
+    - link_3_ixx
+    - link_3_ixy
+    - link_3_ixz
+    - link_3_iyy
+    - link_3_iyz
+    - link_3_izz
+  link_3_com:
+    min: -2.068107805288564e-09
+    max: 0.1669996468792593
+    columns:
+    - link_3_com_x
+    - link_3_com_y
+    - link_3_com_z
+  link_4_inertia:
+    min: -3.7101735307935715e-11
+    max: 0.0050334291416912
+    columns:
+    - link_4_ixx
+    - link_4_ixy
+    - link_4_ixz
+    - link_4_iyy
+    - link_4_iyz
+    - link_4_izz
+  link_4_com:
+    min: -2.938770497728842e-10
+    max: 0.0701490725488567
+    columns:
+    - link_4_com_x
+    - link_4_com_y
+    - link_4_com_z
+  link_5_inertia:
+    min: -1.546222433763466e-10
+    max: 0.0033938607639207
+    columns:
+    - link_5_ixx
+    - link_5_ixy
+    - link_5_ixz
+    - link_5_iyy
+    - link_5_iyz
+    - link_5_izz
+  link_5_com:
+    min: -4.293726855597193e-09
+    max: 0.0729954123385448
+    columns:
+    - link_5_com_x
+    - link_5_com_y
+    - link_5_com_z
+  link_6_inertia:
+    min: -7.651432383792477e-18
+    max: 0.0015274206522244
+    columns:
+    - link_6_ixx
+    - link_6_ixy
+    - link_6_ixz
+    - link_6_iyy
+    - link_6_iyz
+    - link_6_izz
+  link_6_com:
+    min: -1.4093789177188713e-15
+    max: 0.0475645500444824
+    columns:
+    - link_6_com_x
+    - link_6_com_y
+    - link_6_com_z
+individuals:
+  joint_0_coulomb_friction_coeff:
+    min: 8.066382687349494e-05
+    max: 0.4998838849102608
+  joint_0_viscous_friction_coeff:
+    min: 2.457336184968906e-06
+    max: 0.0999698227510455
+  joint_1_coulomb_friction_coeff:
+    min: 4.441152812839633e-05
+    max: 0.3124980071648018
+  joint_1_viscous_friction_coeff:
+    min: 5.576086385172818e-06
+    max: 0.0999955726255584
+  joint_2_coulomb_friction_coeff:
+    min: 3.172377836277527e-05
+    max: 0.195303116455891
+  joint_2_viscous_friction_coeff:
+    min: 2.351633914476903e-06
+    max: 0.09997878839727
+  joint_3_coulomb_friction_coeff:
+    min: 2.9271248507266616e-05
+    max: 0.1220603963632404
+  joint_3_viscous_friction_coeff:
+    min: 3.053930084140344e-06
+    max: 0.0999948537281113
+  joint_4_coulomb_friction_coeff:
+    min: 5.30148292353342e-07
+    max: 0.0762798658927173
+  joint_4_viscous_friction_coeff:
+    min: 6.575048363866021e-06
+    max: 0.0999869726893239
+  joint_5_coulomb_friction_coeff:
+    min: 3.810200702755724e-06
+    max: 0.0476807327137231
+  joint_5_viscous_friction_coeff:
+    min: 2.4007133917702817e-06
+    max: 0.0999944869243068
+  link_0_mass:
+    min: 0.2690969777346811
+    max: 1.428504702021489
+  link_1_mass:
+    min: 0.1437540484542963
+    max: 1.1572006780862945
+  link_2_mass:
+    min: 0.3890700560395523
+    max: 3.182717140927288
+  link_3_mass:
+    min: 0.2541369601232418
+    max: 2.3567504304782263
+  link_4_mass:
+    min: 0.0907894812831408
+    max: 1.1294517391273122
+  link_5_mass:
+    min: 0.0523474211250719
+    max: 0.8684688176301578
+  link_6_mass:
+    min: 0.0436401772386658
+    max: 0.7190228197525305

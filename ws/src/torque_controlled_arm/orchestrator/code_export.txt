@@ -1,0 +1,942 @@
+# CODE EXPORT - Wednesday, July 02 2025 at 14:17
+################################################################################
+
+================================================================================
+FILE: __init__.py
+################################################################################
+
+from .gui import DatasetTrackerGUI
+from .process_manager import ProcessManager
+from .robot_manager import RobotManager
+from .utils import SystemMonitor
+from .core import DatasetOrchestrator
+
+__all__ = [
+    'DatasetTrackerGUI',
+    'ProcessManager', 
+    'RobotManager',
+    'SystemMonitor',
+    'DatasetOrchestrator'
+]
+================================================================================
+
+================================================================================
+FILE: core.py
+################################################################################
+
+import os
+import yaml
+from pathlib import Path
+import time
+import threading
+from .robot_manager import RobotManager
+from .process_manager import ProcessManager
+import tkinter as tk
+
+class DatasetOrchestrator:
+    def __init__(self, gui_interface):
+        self.gui = gui_interface
+        self.robot_manager = RobotManager(self)
+        self.process_manager = ProcessManager(self)
+        self.running = False
+        self.robot_process = None
+
+    def log_message(self, text, source=None):
+        """Proxy method to pass messages to GUI with special handling for orchestrator events"""
+        if source == 'orchestrator':
+            # Add to orchestrator output panel
+            self.gui.add_orchestrator_event(text)
+        self.gui.log_message(text, source)
+
+    def add_orchestrator_event(self, text):
+        """Add an event to the orchestrator output panel"""
+        self.gui.orchestrator_output.insert(tk.END, f"{text}\n", 'event')
+        self.gui.orchestrator_output.see(tk.END)
+        self.gui.root.update_idletasks()
+
+    def update_status(self, message):
+        """Proxy method to update GUI status"""
+        self.gui.update_status(message)
+
+    def update_trajectory_progress(self, current, total, completion, failed, reason=None):
+        """Update trajectory progress in GUI with failure reason"""
+        self.gui.update_trajectory_progress(
+            current=current,
+            total=total,
+            completion=completion,
+            failed=failed,
+            reason=reason
+        )
+        
+    def update_progress(self, current, total):
+        """Proxy method to update GUI progress"""
+        self.gui.update_progress(current, total)
+
+    def update_current_robot(self, name):
+        """Proxy method to update current robot in GUI"""
+        self.gui.update_current_robot(name)
+
+    def append_controller_output(self, text):
+        """Proxy method for controller output"""
+        self.gui.append_controller_output(text)
+
+    def run(self):
+        """Main execution method to be run in a thread"""
+        if self.running:
+            return
+
+        self.running = True
+        self.update_status("Starting dataset generation...")
+        
+        try:
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            settings_file_path = os.path.join(base_dir, "config", "settings.yaml")
+            
+            with open(settings_file_path, "r") as f:
+                settings = yaml.safe_load(f)
+
+            num_robots = settings.get("num_robots_in_experiment", 3)
+            robots_dir = os.path.join(base_dir, "robots")
+            
+            robot_folders = self.get_robot_folders(robots_dir, num_robots)
+            if not robot_folders:
+                return
+
+            self.process_robots(robot_folders)
+
+        except Exception as e:
+            self.log_message(f"Fatal error in orchestrator: {str(e)}\n", source='orchestrator')
+        finally:
+            self.running = False
+            self.update_status("Ready")
+
+    def get_robot_folders(self, robots_dir, num_robots):
+        """Get and validate robot folders"""
+        try:
+            folders = [f.path for f in os.scandir(robots_dir) if f.is_dir()]
+            folders = sorted(folders, key=self.robot_manager.natural_sort_key)
+            return folders[:num_robots]
+        except Exception as e:
+            self.log_message(f"Error accessing robot directories: {e}\n", source='orchestrator')
+            self.update_status("Failed to access robot directories")
+            return []
+
+    def process_robots(self, robot_folders):
+        """Main processing loop for robots"""
+        gazebo_process = self.launch_gazebo()
+        if not gazebo_process:
+            return
+
+        prev_robot = None
+        for i, folder in enumerate(robot_folders):
+            if not self.running:  # Check if we should stop
+                break
+                
+            robot_name = Path(folder).name
+            self.process_robot(i, len(robot_folders), folder, robot_name, prev_robot)
+            prev_robot = robot_name
+
+        self.cleanup(gazebo_process, prev_robot)
+
+    def launch_gazebo(self):
+        """Launch Gazebo environment"""
+        self.update_status("Launching Gazebo...")
+        gazebo_cmd = ["ros2", "launch", "torque_controlled_arm", "bringup.launch.py", "ign_gz:=True"]
+        process = self.process_manager.run_command(gazebo_cmd, source='gazebo')
+        self.log_message("Launching Gazebo...\n", source='gazebo')
+        time.sleep(10)  # Give Gazebo more time to start
+        return process
+
+    def process_robot(self, index, total, folder, robot_name, prev_robot):
+        """Process a single robot"""
+        self.update_current_robot(robot_name)
+        self.update_progress(index+1, total)
+        status_msg = f"Processing robot {index+1}/{total}: {robot_name}"
+        self.update_status(status_msg)
+        self.log_message(f"\n--- Processing Robot {index+1}/{total}: {robot_name} ---\n", 'orchestrator')
+        self.add_orchestrator_event(f"Starting processing for robot: {robot_name}")
+
+        if prev_robot:
+            self.add_orchestrator_event(f"Deleting previous robot: {prev_robot}")
+            self.robot_manager.delete_robot(prev_robot)
+            time.sleep(2)
+            self.add_orchestrator_event(f"Successfully deleted robot: {prev_robot}")
+
+        urdf_path = os.path.join(folder, "robotGA.urdf")
+        if not os.path.exists(urdf_path):
+            error_msg = f"URDF file not found at {urdf_path}"
+            self.log_message(f"{error_msg}\n", 'robot')
+            self.add_orchestrator_event(f"ERROR: {error_msg}")
+            return
+
+        self.add_orchestrator_event(f"Spawning robot: {robot_name}")
+        if self.robot_manager.spawn_robot(urdf_path, robot_name):
+            self.add_orchestrator_event(f"Successfully spawned robot: {robot_name}")
+            time.sleep(5)
+            self.add_orchestrator_event(f"Starting controller for: {robot_name}")
+            if not self.robot_manager.run_combined_controller_node(robot_name):
+                error_msg = f"Failed to start controller for {robot_name}"
+                self.log_message(f"{error_msg}\n", 'controller')
+                self.add_orchestrator_event(f"ERROR: {error_msg}")
+        else:
+            error_msg = f"Failed to spawn robot {robot_name}"
+            self.log_message(f"{error_msg}\n", 'robot')
+            self.add_orchestrator_event(f"ERROR: {error_msg}")
+
+    def cleanup(self, gazebo_process, last_robot):
+        """Cleanup after processing"""
+        if last_robot:
+            self.add_orchestrator_event(f"Deleting last robot: {last_robot}")
+            self.robot_manager.delete_robot(last_robot)
+            self.add_orchestrator_event(f"Deleted last robot: {last_robot}")
+
+        self.add_orchestrator_event("Terminating Gazebo...")
+        if gazebo_process:
+            gazebo_process.terminate()
+            gazebo_process.wait()
+            self.add_orchestrator_event("Gazebo terminated")
+
+        self.add_orchestrator_event("Dataset generation completed!")
+        self.update_status("Dataset generation completed")
+        self.update_progress(1, 1)
+
+    def stop(self):
+        """Request the orchestrator to stop"""
+        self.running = False
+================================================================================
+
+================================================================================
+FILE: gui.py
+################################################################################
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+from tkinter.scrolledtext import ScrolledText
+import time
+import psutil
+import re
+from .process_manager import ProcessManager
+from .robot_manager import RobotManager
+from .core import DatasetOrchestrator
+import threading
+import os
+
+class DatasetTrackerGUI:
+    def __init__(self, root):
+        self.root = root
+        root.title("Dataset Collection Controller")
+        root.geometry("1200x800")
+        
+        # Configure style with bold fonts
+        self.style = ttk.Style()
+        self.style.configure('TNotebook.Tab', font=('Helvetica', 12, 'bold'), padding=[10, 5])
+        self.style.configure('TFrame', background='#f0f0f0')
+        self.style.configure('TLabel', background='#f0f0f0', font=('Helvetica', 11))
+        self.style.configure('Title.TLabel', font=('Helvetica', 14, 'bold'))
+        self.style.configure('Status.TLabel', font=('Helvetica', 12, 'bold'))
+        
+        # Create notebook (tabs)
+        self.notebook = ttk.Notebook(root)
+        self.notebook.pack(expand=True, fill='both', padx=5, pady=5)
+        
+        # Initialize orchestrator first
+        self.orchestrator = DatasetOrchestrator(self)
+        
+        # Then let orchestrator create managers
+        self.process_manager = self.orchestrator.process_manager
+        self.robot_manager = self.orchestrator.robot_manager
+        
+        self.failed_trajectories = 0
+        self.current_trajectory = 0
+        self.total_trajectories = 0
+
+        # Setup tabs
+        self.setup_dataset_tab()
+        self.setup_output_tab()
+        self.setup_logs_tab()
+        
+        # Status bar
+        self.setup_status_bar()
+        
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        # Start the process automatically
+        self.start_main_thread()
+    
+    def update_trajectory_progress(self, current, total, completion, failed, reason=None):
+        """Update the trajectory progress display with failure info"""
+        self.current_trajectory = current
+        self.total_trajectories = total
+        
+        # Update progress bar and labels
+        self.trajectory_label.config(text=f"{current}/{total} targets completed")
+        self.trajectory_progress['value'] = completion * 100
+        self.failed_trajectories_label.config(text=f"Failed: {failed}")
+        
+        # Show failure reason if provided
+        if reason:
+            self.log_message(f"Trajectory {current} failed: {reason}\n", 'controller')
+            failure_frame = ttk.Frame(self.trajectory_frame)
+            failure_frame.pack(fill='x', pady=2)
+            ttk.Label(failure_frame, text=f"Last failure: {reason}", 
+                    foreground='red', font=('Helvetica', 9)).pack(side='left')
+            
+            # Remove previous failure message if exists
+            if hasattr(self, 'last_failure_frame'):
+                self.last_failure_frame.destroy()
+            self.last_failure_frame = failure_frame
+        
+        self.root.update_idletasks()
+
+    def increment_failed_trajectories(self):
+        """Increment the failed trajectories counter"""
+        self.failed_trajectories += 1
+        self.failed_trajectories_label.config(text=f"Failed: {self.failed_trajectories}")
+        self.root.update_idletasks()
+
+    def add_orchestrator_event(self, text):
+        """Add an event to the orchestrator output panel"""
+        timestamp = time.strftime("%H:%M:%S")
+        self.orchestrator_output.insert(tk.END, f"[{timestamp}] {text}\n", 'event')
+        self.orchestrator_output.see(tk.END)
+        self.root.update_idletasks()
+
+    def _format_controller_output(self, content):
+        """Apply formatting to controller output"""
+        # Configure tags for different output parts
+        self.subprocess_output_text.tag_config('section', foreground='cyan', font=('Helvetica', 10, 'bold'))
+        self.subprocess_output_text.tag_config('metric', foreground='yellow')
+        self.subprocess_output_text.tag_config('table', font=('Monospace', 9))
+        
+        # Process each line
+        for line in content.split('\n'):
+            if line.startswith('=== '):
+                self.subprocess_output_text.insert(tk.END, line + '\n', 'section')
+            elif ':' in line and any(c.isalpha() for c in line):
+                # Likely a metric line
+                self.subprocess_output_text.insert(tk.END, line + '\n', 'metric')
+            else:
+                # Treat as table or regular text
+                self.subprocess_output_text.insert(tk.END, line + '\n', 'table')
+
+    def append_controller_output(self, text):
+        """Handle controller output display with better formatting"""
+        if "'''" in text:
+            # Clear previous output and insert new formatted output
+            self.subprocess_output_text.delete("1.0", tk.END)
+            
+            # Extract content between markers and format with tags
+            content = text.split("'''")[1]
+            self._format_controller_output(content)
+        else:
+            # Append regular output
+            self.subprocess_output_text.insert(tk.END, text)
+        
+        self.subprocess_output_text.see(tk.END)
+        self.root.update_idletasks()
+
+    def setup_status_bar(self):
+        self.status_frame = ttk.Frame(self.root)
+        self.status_frame.pack(fill='x', padx=5, pady=5)
+        
+        self.status_label = ttk.Label(self.status_frame, text="Status: Initializing...", style='Status.TLabel')
+        self.status_label.pack(side='left', padx=5)
+        
+        self.progress = ttk.Progressbar(self.status_frame, mode='determinate')
+        self.progress.pack(side='right', fill='x', expand=True, padx=5)
+
+    def setup_dataset_tab(self):
+        self.dataset_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.dataset_tab, text='Dataset Generation')
+        
+        main_frame = ttk.Frame(self.dataset_tab)
+        main_frame.pack(expand=True, fill='both', padx=10, pady=10)
+        
+        title_frame = ttk.Frame(main_frame)
+        title_frame.pack(fill='x', pady=(0, 10))
+        ttk.Label(title_frame, text="Dataset Generation Progress", style='Title.TLabel').pack(side='left')
+        
+        # Create a paned window for vertical split
+        paned = ttk.PanedWindow(main_frame, orient=tk.VERTICAL)
+        paned.pack(expand=True, fill='both')
+        
+        # Top frame - current robot info
+        top_frame = ttk.Frame(paned)
+        paned.add(top_frame, weight=1)
+        
+        # Current robot frame
+        self.current_robot_frame = ttk.LabelFrame(top_frame, text="Current Robot")
+        self.current_robot_frame.pack(fill='x', pady=5)
+        
+        self.robot_name_label = ttk.Label(self.current_robot_frame, text="None", font=("Helvetica", 14, 'bold'))
+        self.robot_name_label.pack(pady=5)
+        
+        # Trajectory progress frame
+        self.trajectory_frame = ttk.LabelFrame(top_frame, text="Trajectory Progress")
+        self.trajectory_frame.pack(fill='x', pady=5)
+        
+        self.trajectory_progress = ttk.Progressbar(self.trajectory_frame, mode='determinate')
+        self.trajectory_progress.pack(fill='x', padx=5, pady=5)
+        
+        self.trajectory_label = ttk.Label(self.trajectory_frame, text="0/0 targets completed")
+        self.trajectory_label.pack()
+        
+        self.failed_trajectories_label = ttk.Label(self.trajectory_frame, text="Failed: 0")
+        self.failed_trajectories_label.pack()
+        
+        # Bottom frame - system info
+        bottom_frame = ttk.Frame(paned)
+        paned.add(bottom_frame, weight=1)
+        
+        # Progress info
+        self.progress_frame = ttk.LabelFrame(bottom_frame, text="Robot Progress")
+        self.progress_frame.pack(fill='x', pady=5)
+        
+        self.robot_progress_label = ttk.Label(self.progress_frame, text="0/0 robots processed")
+        self.robot_progress_label.pack(pady=5)
+        
+        # System info
+        self.system_frame = ttk.LabelFrame(bottom_frame, text="System Information")
+        self.system_frame.pack(fill='x', pady=5)
+        
+        self.cpu_label = ttk.Label(self.system_frame, text="CPU Usage: -")
+        self.cpu_label.pack(anchor='w')
+        
+        self.mem_label = ttk.Label(self.system_frame, text="Memory Usage: -")
+        self.mem_label.pack(anchor='w')
+        
+        # Orchestrator output panel
+        self.orchestrator_output_frame = ttk.LabelFrame(bottom_frame, text="Orchestrator Events")
+        self.orchestrator_output_frame.pack(fill='both', expand=True, pady=5)
+        
+        self.orchestrator_output = ScrolledText(
+            self.orchestrator_output_frame,
+            height=8,
+            font=("Monospace", 9),
+            bg="black",
+            fg="white"
+        )
+        self.orchestrator_output.pack(fill='both', expand=True, padx=5, pady=5)
+        self.orchestrator_output.tag_config('event', foreground='cyan')
+        
+        self.update_system_info()
+
+    def setup_output_tab(self):
+        self.output_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.output_tab, text='Controller Output')
+        
+        main_frame = ttk.Frame(self.output_tab)
+        main_frame.pack(expand=True, fill='both', padx=10, pady=10)
+        
+        title_frame = ttk.Frame(main_frame)
+        title_frame.pack(fill='x', pady=(0, 10))
+        ttk.Label(title_frame, text="Controller Node Output", style='Title.TLabel').pack(side='left')
+        
+        # Configure text widget with better styling
+        self.subprocess_output_text = ScrolledText(
+            main_frame,
+            height=25,
+            width=120,
+            wrap=tk.WORD,
+            bg="black",
+            fg="white",
+            insertbackground="white",
+            selectbackground="blue"
+        )
+        self.subprocess_output_text.pack(expand=True, fill='both', padx=5, pady=5)
+        
+        # Configure tags for syntax highlighting
+        self.subprocess_output_text.tag_config('section', foreground='cyan', font=('Helvetica', 10, 'bold'))
+        self.subprocess_output_text.tag_config('metric', foreground='yellow')
+        self.subprocess_output_text.tag_config('table', font=('Monospace', 9))
+        self.subprocess_output_text.tag_config('error', foreground='red')
+        self.subprocess_output_text.tag_config('warning', foreground='orange')
+
+    def setup_logs_tab(self):
+        self.logs_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.logs_tab, text='System Logs')
+        
+        # Create inner notebook for different log types
+        self.logs_notebook = ttk.Notebook(self.logs_tab)
+        self.logs_notebook.pack(expand=True, fill='both', padx=5, pady=5)
+        
+        # Create tabs for different components
+        self.setup_component_log_tab('All', 'all_logs')
+        self.setup_component_log_tab('Orchestrator', 'orchestrator')
+        self.setup_component_log_tab('Gazebo', 'gazebo')
+        self.setup_component_log_tab('Robot', 'robot')
+        self.setup_component_log_tab('Controller', 'controller', show_info=False)
+        
+        # Setup filters and counters
+        self.setup_log_filters()
+
+    def setup_component_log_tab(self, name, source, show_info=True):
+        """Create a tab for a specific component's logs"""
+        tab = ttk.Frame(self.logs_notebook)
+        self.logs_notebook.add(tab, text=name)
+        
+        # Create text widget for logs
+        log_text = ScrolledText(tab, height=20, width=120, 
+                              font=("Monospace", 10), bg="black")
+        log_text.pack(expand=True, fill='both', padx=5, pady=5)
+        
+        # Configure tags for different log levels
+        log_text.tag_config('error', foreground='red')
+        log_text.tag_config('warning', foreground='orange')
+        log_text.tag_config('info', foreground='light gray')
+        log_text.tag_config('command', foreground='cyan')
+        log_text.tag_config('timestamp', foreground='yellow')
+        
+        # Store references
+        setattr(self, f"{source}_text", log_text)
+        setattr(self, f"{source}_logs", [])
+        
+        # Store configuration
+        setattr(self, f"{source}_show_info", show_info)
+
+    def setup_log_filters(self):
+        """Setup filter controls for logs"""
+        filter_frame = ttk.Frame(self.logs_tab)
+        filter_frame.pack(fill='x', pady=5)
+        
+        self.show_errors = tk.BooleanVar(value=True)
+        self.show_warnings = tk.BooleanVar(value=True)
+        self.show_info = tk.BooleanVar(value=True)
+        
+        ttk.Checkbutton(filter_frame, text="Errors", variable=self.show_errors, 
+                       command=self.update_all_log_displays).pack(side='left', padx=5)
+        ttk.Checkbutton(filter_frame, text="Warnings", variable=self.show_warnings,
+                       command=self.update_all_log_displays).pack(side='left', padx=5)
+        ttk.Checkbutton(filter_frame, text="Info", variable=self.show_info,
+                       command=self.update_all_log_displays).pack(side='left', padx=5)
+        
+        counter_frame = ttk.Frame(self.logs_tab)
+        counter_frame.pack(fill='x', pady=5)
+        
+        self.error_count = tk.IntVar(value=0)
+        self.warning_count = tk.IntVar(value=0)
+        self.info_count = tk.IntVar(value=0)
+        
+        ttk.Label(counter_frame, text="Errors:").pack(side='left', padx=5)
+        ttk.Label(counter_frame, textvariable=self.error_count, foreground='red').pack(side='left', padx=5)
+        
+        ttk.Label(counter_frame, text="Warnings:").pack(side='left', padx=5)
+        ttk.Label(counter_frame, textvariable=self.warning_count, foreground='orange').pack(side='left', padx=5)
+        
+        ttk.Label(counter_frame, text="Info:").pack(side='left', padx=5)
+        ttk.Label(counter_frame, textvariable=self.info_count, foreground='white').pack(side='left', padx=5)
+        
+        ttk.Button(counter_frame, text="Clear All Logs", command=self.clear_all_logs).pack(side='right', padx=5)
+
+    def update_system_info(self):
+        cpu_percent = psutil.cpu_percent()
+        mem_info = psutil.virtual_memory()
+        
+        self.cpu_label.config(text=f"CPU Usage: {cpu_percent}%")
+        self.mem_label.config(text=f"Memory Usage: {mem_info.percent}% (Used: {mem_info.used/1024/1024:.1f} MB / Total: {mem_info.total/1024/1024:.1f} MB)")
+        self.root.after(2000, self.update_system_info)
+
+    def update_status(self, message):
+        self.status_label.config(text=f"Status: {message}")
+        self.root.update_idletasks()
+
+    def update_progress(self, current, total):
+        self.robot_progress_label.config(text=f"{current}/{total} robots processed")
+        self.progress['value'] = (current / total) * 100
+        self.root.update_idletasks()
+
+    def clear_all_logs(self):
+        """Clear all log tabs"""
+        for source in ['all_logs', 'orchestrator', 'gazebo', 'robot', 'controller']:
+            text_widget = getattr(self, f"{source}_text")
+            text_widget.delete('1.0', tk.END)
+            setattr(self, f"{source}_logs", [])
+        
+        self.error_count.set(0)
+        self.warning_count.set(0)
+        self.info_count.set(0)
+
+    def update_all_log_displays(self):
+        """Update all log displays based on current filters"""
+        for source in ['all_logs', 'orchestrator', 'gazebo', 'robot', 'controller']:
+            self.update_log_display(source)
+
+    def update_log_display(self, source):
+        """Update a specific log display"""
+        text_widget = getattr(self, f"{source}_text")
+        logs = getattr(self, f"{source}_logs")
+        show_info = getattr(self, f"{source}_show_info", True)
+        
+        text_widget.delete('1.0', tk.END)
+        
+        for entry in logs:
+            text, tags = entry
+            show = False
+            
+            if 'error' in tags and self.show_errors.get():
+                show = True
+            elif 'warning' in tags and self.show_warnings.get():
+                show = True
+            elif ('info' in tags or 'command' in tags) and self.show_info.get() and show_info:
+                show = True
+            
+            if show:
+                text_widget.insert(tk.END, text, tags)
+        
+        text_widget.see(tk.END)
+
+    def log_message(self, text, source=None):
+        timestamp = time.strftime("%H:%M:%S")
+        full_text = f"[{timestamp}] {text}"
+        
+        # Determine log level and tags
+        tags = []
+        if source == 'command':
+            tags = ['command', 'info']
+            self.info_count.set(self.info_count.get() + 1)
+        elif "error" in text.lower() or "exception" in text.lower():
+            tags = ['error']
+            self.error_count.set(self.error_count.get() + 1)
+        elif "warning" in text.lower():
+            tags = ['warning']
+            self.warning_count.set(self.warning_count.get() + 1)
+        else:
+            tags = ['info']
+            self.info_count.set(self.info_count.get() + 1)
+        
+        tags.append('timestamp')
+        
+        # Add to all logs
+        self.add_log_entry('all_logs', full_text, tags)
+        
+        # Add to specific component log if source is specified
+        if source and source != 'command':
+            self.add_log_entry(source, full_text, tags)
+
+    def add_log_entry(self, source, text, tags):
+        """Add log entry to a specific source's log"""
+        logs = getattr(self, f"{source}_logs")
+        text_widget = getattr(self, f"{source}_text")
+        
+        # Limit log entries to prevent memory issues
+        if len(logs) > 1000:
+            logs.pop(0)
+        
+        logs.append((text, tuple(tags)))
+        
+        # Determine if we should show this entry
+        show_info = getattr(self, f"{source}_show_info", True)
+        show = False
+        
+        if 'error' in tags and self.show_errors.get():
+            show = True
+        elif 'warning' in tags and self.show_warnings.get():
+            show = True
+        elif ('info' in tags or 'command' in tags) and self.show_info.get() and show_info:
+            show = True
+            
+        if show:
+            text_widget.insert(tk.END, text, tuple(tags))
+            text_widget.see(tk.END)
+        
+        self.root.update_idletasks()
+
+    def on_closing(self):
+        if messagebox.askyesno("Exit", "Are you sure you want to quit?\nAll robots and Gazebo will be terminated."):
+            self.log_message("User requested shutdown. Cleaning up...\n", source='orchestrator')
+            self.orchestrator.stop()
+            self.process_manager.cleanup()
+            self.root.destroy()
+            os._exit(0)
+
+    def update_current_robot(self, name):
+        self.robot_name_label.config(text=name)
+        self.root.update_idletasks()
+
+    def start_main_thread(self):
+        threading.Thread(target=self.orchestrator.run, daemon=True).start()
+
+    def main(self):
+        # Main logic will be implemented here
+        pass
+================================================================================
+
+================================================================================
+FILE: process_manager.py
+################################################################################
+
+import subprocess
+import threading
+import signal
+import os
+
+class ProcessManager:
+    def __init__(self, orchestrator):
+        self.orchestrator = orchestrator
+        self.active_processes = []
+        
+    def run_command(self, command, capture_output=True, shell=False, cwd=None, source=None):
+        self.orchestrator.log_message(f"Executing: {' '.join(command) if isinstance(command, list) else command}\n", 'command')
+        
+        try:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                shell=shell,
+                cwd=cwd,
+                bufsize=1,  # Line buffered
+                universal_newlines=True
+            )
+            self.active_processes.append(process)
+            
+            def stream_output(stream, is_stderr=False):
+                try:
+                    for line in iter(stream.readline, ''):
+                        if line:
+                            self.orchestrator.log_message(line, source)
+                finally:
+                    stream.close()
+
+            stdout_thread = threading.Thread(
+                target=stream_output,
+                args=(process.stdout, False),
+                daemon=True
+            )
+            stderr_thread = threading.Thread(
+                target=stream_output,
+                args=(process.stderr, True),
+                daemon=True
+            )
+
+            stdout_thread.start()
+            stderr_thread.start()
+
+            return process
+        except Exception as e:
+            self.orchestrator.log_message(f"Error executing command: {e}\n", source)
+            return None
+
+    def kill_processes_by_name(self, names):
+        for name in names:
+            try:
+                pids = subprocess.check_output(["pgrep", "-f", name]).decode().strip().split('\n')
+                for pid in pids:
+                    if pid.isdigit():
+                        os.kill(int(pid), signal.SIGTERM)
+                        self.orchestrator.log_message(f"Killed process {name} with PID {pid}\n", 'command')
+            except subprocess.CalledProcessError:
+                pass
+
+    def cleanup(self):
+        for process in self.active_processes:
+            try:
+                process.terminate()
+            except:
+                pass
+        self.active_processes = []
+================================================================================
+
+================================================================================
+FILE: robot_manager.py
+################################################################################
+
+import time
+import re
+from pathlib import Path
+import os
+import yaml
+import subprocess
+import threading
+import json
+
+class RobotManager:
+    def __init__(self, orchestrator):
+        self.orchestrator = orchestrator
+        
+    def natural_sort_key(self, s):
+        return [int(text) if text.isdigit() else text.lower() 
+                for text in re.split('([0-9]+)', str(s))]
+    
+    def get_robot_id(self, robot_name):
+        try:
+            command = ["ign", "model", "-m", robot_name, "-p"]
+            self.orchestrator.log_message(f"Checking robot ID for {robot_name}\n", 'command')
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            output, _ = process.communicate()
+            match = re.search(r"Model: \[([0-9]+)\]", output)
+            if match:
+                return match.group(1)
+        except Exception as e:
+            self.orchestrator.log_message(f"Error getting robot ID for {robot_name}: {e}\n", 'robot')
+        return None
+
+    def delete_robot(self, robot_name):
+        robot_id = self.get_robot_id(robot_name)
+        if robot_id:
+            self.orchestrator.log_message(f"Deleting robot {robot_name} with ID {robot_id}...\n", 'robot')
+            controllers_to_remove = ['joint_state_broadcaster', 'torque_arm_controller']
+
+            # Step 1: Stop controllers
+            stop_command = [
+                "ros2", "service", "call", "/controller_manager/switch_controller",
+                "controller_manager_msgs/srv/SwitchController",
+                f"{{stop_controllers: {controllers_to_remove}, strictness: 2}}"
+            ]
+            try:
+                process = subprocess.Popen(stop_command)
+                process.wait()
+                self.orchestrator.log_message(f"Stopped controllers: {controllers_to_remove}\n", 'robot')
+                time.sleep(1)
+            except Exception as e:
+                self.orchestrator.log_message(f"Error stopping controllers: {e}\n", 'robot')
+
+            # Step 2: Unload controllers
+            for controller in controllers_to_remove:
+                unload_command = [
+                    "ros2", "service", "call", "/controller_manager/unload_controller",
+                    "controller_manager_msgs/srv/UnloadController",
+                    f"{{name: '{controller}'}}"
+                ]
+                try:
+                    process = subprocess.Popen(unload_command)
+                    process.wait()
+                    self.orchestrator.log_message(f"Unloaded controller: {controller}\n", 'robot')
+                    time.sleep(1)
+                except Exception as e:
+                    self.orchestrator.log_message(f"Error unloading controller {controller}: {e}\n", 'robot')
+
+            # Step 3: Delete robot entity from Gazebo
+            delete_command = [
+                "ros2", "service", "call", "/world/default/remove",
+                "ros_gz_interfaces/srv/DeleteEntity",
+                f"{{entity: {{id: {robot_id}, name: '{robot_name}', type: 0}}}}"
+            ]
+            try:
+                process = subprocess.Popen(delete_command)
+                process.wait()
+                self.orchestrator.log_message(f"Successfully deleted {robot_name}.\n", 'robot')
+                time.sleep(1)
+            except Exception as e:
+                self.orchestrator.log_message(f"Error deleting robot {robot_name}: {e}\n", 'robot')
+
+    def spawn_robot(self, urdf_path, robot_name):
+        self.orchestrator.log_message(f"Spawning robot {robot_name} from {urdf_path}...\n", 'robot')
+        command = ["ros2", "launch", "torque_controlled_arm", "robot.launch.py",
+                f"urdf_path:={urdf_path}", f"robot_name:={robot_name}"]
+        try:
+            process = subprocess.Popen(command)
+            self.orchestrator.log_message(f"Spawn process started for {robot_name} with PID: {process.pid}\n", 'robot')
+            time.sleep(5)  # Give time for robot to spawn
+            return True
+        except Exception as e:
+            self.orchestrator.log_message(f"Error spawning robot {robot_name}: {e}\n", 'robot')
+            return False
+
+    def run_combined_controller_node(self, robot_name):
+        self.orchestrator.log_message(f"Launching controller_node for {robot_name}...\n", 'controller')
+        command = [
+            "ros2", "run", "torque_controlled_arm", "controller_node",
+            "--ros-args", "-p", f"robot_name:={robot_name}", "-p", "plot:=true",
+        ]
+        
+        try:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+            
+            def stream_output(stream, is_stderr=False):
+                try:
+                    for line in iter(stream.readline, ''):
+                        if line:
+                            # Handle progress updates
+                            if "PROGRESS_JSON:" in line:
+                                try:
+                                    progress_data = json.loads(line.split("PROGRESS_JSON:")[1])
+                                    self.orchestrator.update_trajectory_progress(
+                                        current=progress_data['current'],
+                                        total=progress_data['total'],
+                                        completion=progress_data['completion'],
+                                        failed=progress_data['failed'],
+                                        reason=progress_data.get('reason', None)
+                                    )
+                                except (json.JSONDecodeError, KeyError) as e:
+                                    self.orchestrator.log_message(
+                                        f"Error parsing progress: {str(e)}",
+                                        'controller'
+                                    )
+                            
+                            # Handle regular output
+                            if "'''" in line:
+                                self.orchestrator.append_controller_output(line)
+                            
+                            # Log errors/warnings
+                            if is_stderr or ('error' in line.lower() or 'warning' in line.lower()):
+                                self.orchestrator.log_message(line, 'controller')
+                finally:
+                    stream.close()
+
+            stdout_thread = threading.Thread(
+                target=stream_output,
+                args=(process.stdout, False),
+                daemon=True
+            )
+            stderr_thread = threading.Thread(
+                target=stream_output,
+                args=(process.stderr, True),
+                daemon=True
+            )
+
+            stdout_thread.start()
+            stderr_thread.start()
+            
+            # Wait for process to complete
+            while process.poll() is None:
+                time.sleep(0.1)
+                
+            return process.returncode == 0
+        except Exception as e:
+            self.orchestrator.log_message(f"Error starting controller for {robot_name}: {e}\n", 'controller')
+            return False
+================================================================================
+
+================================================================================
+FILE: run.py
+################################################################################
+
+from orchestrator.gui import DatasetTrackerGUI
+import tkinter as tk
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = DatasetTrackerGUI(root)
+    root.mainloop()
+================================================================================
+
+================================================================================
+FILE: utils.py
+################################################################################
+
+import psutil
+
+class SystemMonitor:
+    @staticmethod
+    def get_system_info():
+        cpu_percent = psutil.cpu_percent()
+        mem_info = psutil.virtual_memory()
+        return {
+            'cpu': cpu_percent,
+            'memory': {
+                'percent': mem_info.percent,
+                'used': mem_info.used/1024/1024,
+                'total': mem_info.total/1024/1024
+            }
+        }
+================================================================================
+

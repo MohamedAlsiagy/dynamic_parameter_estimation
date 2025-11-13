@@ -1,0 +1,55 @@
+# Global Configuration
+seed: 226
+version: "4.00"
+
+# Dataset Configuration
+dataset_root_path: "/media/raid/processed_trajectories"
+postprocessed_dataset_dir: "/media/raid/postprocessed_datasets"
+model_save_dir: "/media/raid/final_trained_models"
+model_save_freq: 5
+
+# Evaluation model
+Best_model: /media/raid/final_trained_models/Transformer_s64_sr64_ssr16_m4_h32_d128_b64_e50_v4.00/best/model.pth
+secondery_model_save_dir: "/media/raid/trained_models_8192_secondery"
+
+continue: false
+
+batch_size_robots: 8192 # Number of robots to load at once for preprocessing
+overlap_ratio: 0.5
+train_size: 8192
+
+# Model Configuration
+model_type: "Transformer" # "Transformer" or "Mamba"
+
+# Common Model Hyperparameters
+input_features: all
+input_features_exclude: 
+  - NoneNoneNoneNone
+output_features: analyzed
+
+embed_dim: 128
+num_joints: 6
+m: 4
+decoder_size: 1
+dropout: 0.40
+
+# Training Configuration
+num_epochs: 50
+batch_size_training: 64 # Batch size for model training
+lr: 0.0001
+
+# Logging Configuration
+wandb_project: "Final Dynamic Parameter Estimation"
+
+## Model Type Specific Configuration ##
+# Transformer Specific #
+sequence_length_transformer: 64
+sampling_rate_transformer: 64 # Sample one point from each two points
+secondary_sampling_rate_transformer: 16 # Sample one point from each four points
+num_heads: 32
+ff_dim: 128
+
+# Mamba Specific #
+sequence_length_mamba: 256
+sampling_rate_mamba: 16 # Use full sampling
+secondary_sampling_rate_mamba: 4 # Sample one point from each four points

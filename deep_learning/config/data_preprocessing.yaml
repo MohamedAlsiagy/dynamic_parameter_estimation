@@ -1,0 +1,20 @@
+initial_naming_index: 5632
+# initial_naming_index: 8704
+
+robot_range:
+  start: 1032
+  end: 1052   # exclusive
+
+include:
+  link_positions: False
+  link_orientations: False
+  link_velocities: False
+  link_angular_velocities: False
+  jacobians: True
+
+sampling_frequency: 1000 # The original is around 1000Hz, so anything above 1000Hz is considered meaningless.
+
+debug_sampling:
+  generate_samples: True
+  random_pick: False
+  sample_size: 500  

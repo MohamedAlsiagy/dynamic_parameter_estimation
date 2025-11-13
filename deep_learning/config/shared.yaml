@@ -1,0 +1,7 @@
+robotics_dir: "/media/raid/robots/robots_p6"
+raw_dataset_dir: "/media/raid/raw_trajectories/dataset_p6"
+
+# robotics_dir: "/media/raid/robots/robots_p7"
+# raw_dataset_dir: "/media/raid/raw_trajectories/dataset_p7"
+
+preprocessed_dataset_dir: "/media/raid/processed_trajectories"
