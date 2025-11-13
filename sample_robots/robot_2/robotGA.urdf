@@ -1,0 +1,345 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="robot_2">
+  <link name="world" />
+  <joint name="world_to_base" type="fixed">
+    <parent link="world" />
+    <child link="link_0" />
+  </joint>
+  <gazebo>
+    <plugin filename="libign_ros2_control-system.so" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+      <parameters>/root/ws/src/torque_controlled_arm/config/controllers.yaml</parameters>
+      <controller_manager_node_name>robot_2_0/controller_manager</controller_manager_node_name>
+      <ros>
+        <namespace>$(arg namespace)</namespace>
+      </ros>
+    </plugin>
+  </gazebo>
+  <material name="color_0">
+    <color rgba="0.577 0.258 0.926 1" />
+  </material>
+  <link name="link_0">
+    <inertial>
+      <origin xyz="-2.879422544764681e-16 -1.3035293889414492e-19 0.08013482701966519" rpy="0 0 0" />
+      <mass value="0.3995532030198006" />
+      <inertia ixx="0.0010255961444848984" ixy="1.8409028211085136e-21" ixz="2.3108643769605405e-18" iyy="0.0010255961444848919" iyz="2.2500708204912194e-20" izz="0.0002530028860019119" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_0.stl" />
+      </geometry>
+      <material name="color_0" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_0.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_0" type="revolute">
+    <parent link="link_0" />
+    <child link="link_1" />
+    <origin xyz="0.0 0.0 0.173659204679454" rpy="0 0 0" />
+    <axis xyz="0.0 1.2246467991473532e-16 -1.0" />
+    <limit lower="-6.283185307179586" upper="6.283185307179586" effort="8000.0" velocity="30.0" />
+    <dynamics damping="0.08538966471695647" friction="0.46230909084833" />
+  </joint>
+  <transmission name="transmission_joint_0">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_0">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor_joint_0">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo reference="joint_0">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
+  <material name="color_1">
+    <color rgba="0.645 0.249 0.854 1" />
+  </material>
+  <link name="link_1">
+    <inertial>
+      <origin xyz="-1.4677472319380128e-10 -2.213450242645702e-10 0.04214619642123176" rpy="0 0 0" />
+      <mass value="0.2280626636234781" />
+      <inertia ixx="0.00039838996492536246" ixy="-5.120628715498168e-14" ixz="1.962953445243078e-12" iyy="0.00038718270024669594" iyz="5.293046904003675e-12" izz="0.0001308608203648837" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_1.stl" />
+      </geometry>
+      <material name="color_1" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_1.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_1" type="revolute">
+    <parent link="link_1" />
+    <child link="link_2" />
+    <origin xyz="0.0 1.4487084640532727e-18 0.10656802652871672" rpy="0 0 0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-6.283185307179586" upper="6.283185307179586" effort="8000.0" velocity="30.0" />
+    <dynamics damping="0.08155215857210724" friction="0.13818738340572367" />
+  </joint>
+  <transmission name="transmission_joint_1">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor_joint_1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo reference="joint_1">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
+  <material name="color_2">
+    <color rgba="0.714 0.240 0.782 1" />
+  </material>
+  <link name="link_2">
+    <inertial>
+      <origin xyz="8.40464699010391e-10 -9.324832727945864e-10 0.17645892449958944" rpy="0 0 0" />
+      <mass value="0.61459990801251" />
+      <inertia ixx="0.0066186720492475435" ixy="-6.9957905473677715e-12" ixz="6.62224488223455e-11" iyy="0.006617543708547067" iyz="-6.53388749562079e-12" izz="0.00029052365304751396" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_2.stl" />
+      </geometry>
+      <material name="color_2" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_2.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_2" type="revolute">
+    <parent link="link_2" />
+    <child link="link_3" />
+    <origin xyz="0.0 -5.098616525425841e-33 0.36149370376060536" rpy="0 0 0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-6.283185307179586" upper="6.283185307179586" effort="8000.0" velocity="30.0" />
+    <dynamics damping="0.09208144103330658" friction="0.012885356575294986" />
+  </joint>
+  <transmission name="transmission_joint_2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_2">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor_joint_2">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo reference="joint_2">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
+  <material name="color_3">
+    <color rgba="0.783 0.231 0.710 1" />
+  </material>
+  <link name="link_3">
+    <inertial>
+      <origin xyz="2.2689092536967535e-10 -2.3066195917628216e-11 0.14428346062393813" rpy="0 0 0" />
+      <mass value="0.45033929902393827" />
+      <inertia ixx="0.003220663946897671" ixy="-7.396512279359665e-13" ixz="1.2763756662495418e-11" iyy="0.0032263686156407245" iyz="-1.6797327490696213e-12" izz="0.0001912225338648376" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_3.stl" />
+      </geometry>
+      <material name="color_3" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_3.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_3" type="revolute">
+    <parent link="link_3" />
+    <child link="link_4" />
+    <origin xyz="0.0 8.497694209043069e-34 0.29871306368441797" rpy="0 0 0" />
+    <axis xyz="0.0 1.2246467991473532e-16 -1.0" />
+    <limit lower="-6.283185307179586" upper="6.283185307179586" effort="8000.0" velocity="30.0" />
+    <dynamics damping="0.024990728776748294" friction="0.08469446549703202" />
+  </joint>
+  <transmission name="transmission_joint_3">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_3">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor_joint_3">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo reference="joint_3">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
+  <material name="color_4">
+    <color rgba="0.851 0.222 0.639 1" />
+  </material>
+  <link name="link_4">
+    <inertial>
+      <origin xyz="-7.785868667911141e-11 -2.127078573006577e-10 0.05640838864294029" rpy="0 0 0" />
+      <mass value="0.18966114493449535" />
+      <inertia ixx="0.00036747956958212163" ixy="3.0072465928747814e-14" ixz="7.279598551216115e-13" iyy="0.00036154357603040407" iyz="4.0602361180075465e-12" izz="7.385762099228503e-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_4.stl" />
+      </geometry>
+      <material name="color_4" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_4.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_4" type="revolute">
+    <parent link="link_4" />
+    <child link="link_5" />
+    <origin xyz="0.0 1.1503956341717197e-18 0.12780008944889312" rpy="0 0 0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-6.283185307179586" upper="6.283185307179586" effort="8000.0" velocity="30.0" />
+    <dynamics damping="0.0639046701138875" friction="0.06375211052897933" />
+  </joint>
+  <transmission name="transmission_joint_4">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_4">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor_joint_4">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo reference="joint_4">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
+  <material name="color_5">
+    <color rgba="0.920 0.213 0.567 1" />
+  </material>
+  <link name="link_5">
+    <inertial>
+      <origin xyz="9.043510674295162e-10 -2.813157828180434e-10 0.0561663658817388" rpy="0 0 0" />
+      <mass value="0.14659354911789726" />
+      <inertia ixx="0.0002006199498117387" ixy="-1.032507575802033e-12" ixz="5.993456220611741e-12" iyy="0.00020456671613865371" iyz="-1.9667847213904933e-12" izz="5.445109541611945e-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_5.stl" />
+      </geometry>
+      <material name="color_5" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_5.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_5" type="revolute">
+    <parent link="link_5" />
+    <child link="link_6" />
+    <origin xyz="0.0 -8.497694209043069e-34 0.12045364017441401" rpy="0 0 0" />
+    <axis xyz="0.0 1.2246467991473532e-16 -1.0" />
+    <limit lower="-6.283185307179586" upper="6.283185307179586" effort="8000.0" velocity="30.0" />
+    <dynamics damping="0.047106738217026746" friction="0.02621778290346848" />
+  </joint>
+  <transmission name="transmission_joint_5">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_5">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor_joint_5">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo reference="joint_5">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
+  <material name="color_6">
+    <color rgba="0.988 0.204 0.495 1" />
+  </material>
+  <link name="link_6">
+    <inertial>
+      <origin xyz="1.0971107401306247e-16 2.426431981567454e-19 0.04434864332219759" rpy="0 0 0" />
+      <mass value="0.13813803617624898" />
+      <inertia ixx="0.0001659677951060564" ixy="-8.743240207158763e-22" ixz="-3.528540706029459e-19" iyy="0.00016596779510605588" iyz="4.468410827873e-22" izz="4.859196649103442e-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_6.stl" />
+      </geometry>
+      <material name="color_6" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="/root/ws/src/torque_controlled_arm/robots_p6/robot_2/stl/link_6.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <ros2_control name="robot_0_control" type="system">
+    <hardware>
+      <plugin>ign_ros2_control/IgnitionSystem</plugin>
+    </hardware>
+    <joint name="joint_0">
+      <command_interface name="effort" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+      <state_interface name="effort" />
+    </joint>
+    <joint name="joint_1">
+      <command_interface name="effort" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+      <state_interface name="effort" />
+    </joint>
+    <joint name="joint_2">
+      <command_interface name="effort" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+      <state_interface name="effort" />
+    </joint>
+    <joint name="joint_3">
+      <command_interface name="effort" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+      <state_interface name="effort" />
+    </joint>
+    <joint name="joint_4">
+      <command_interface name="effort" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+      <state_interface name="effort" />
+    </joint>
+    <joint name="joint_5">
+      <command_interface name="effort" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+      <state_interface name="effort" />
+    </joint>
+  </ros2_control>
+</robot>
