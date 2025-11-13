@@ -37,6 +37,12 @@ conda activate rgen
 
 ## Section 1: Robot Folder Generation
 
+First, activate the environment:
+
+```bash
+conda activate rgen
+```
+
 This section describes how to generate robot definition files. The main script for this is located in `robot_generator/main.py`.
 
 ### Step 1: Configure Robot Generation
@@ -108,6 +114,19 @@ Robots_main_folder:
 
 ## Section 2: Gazebo Trajectory Generator
 
+First, activate the environment:
+
+```bash
+conda activate tgen
+```
+
+and colcon build the workspace
+
+```bash
+cd ws
+colcon build
+```
+
 This component automates running trajectories for the generated robots inside Gazebo with ROS, collecting raw trajectory data. The main script is `ws/src/torque_controlled_arm/orchestrator/run.py`.
 
 ### Step 1: Configure `settings.yaml`
@@ -170,6 +189,12 @@ output_dir:
 ---
 
 ## Section 3: Dataset Preprocessor
+
+First, activate the environment:
+
+```bash
+conda activate dlenv
+```
 
 This stage transforms raw trajectory datasets into a structured and normalized format suitable for deep learning. The main scripts are in `deep_learning/data_preprocessor`.
 
@@ -250,6 +275,12 @@ This saves `dynamic_parameters_normalized.csv` for each robot in its preprocesse
 ---
 
 ## Section 4: Deep Learning and Dataset Caching
+
+make sure you activated the enviroment:
+
+```bash
+conda activate dlenv
+```
 
 This stage handles loading preprocessed datasets, caching them, training deep learning models (Transformer or Mamba), and saving checkpoints. The main training script is `deep_learning/deep_learning/main.py`.
 
