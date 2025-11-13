@@ -57,7 +57,7 @@ from robot_generator.robot.robot_arm_pack import generate_n_kinematically_consta
 def main():
     generate_n_kinematically_constant_robots(
         512, # Number of robots to generate
-        "ws/src/torque_controlled_arm/robots_p7", # Output directory for robot files
+        "./robots", # Output directory for robot files
         [15 , 7.5 , 30 , 25 , 10 , 7.5 , 10], # Link lengths
         initial_diameter_range=(6, 12), # Range for initial diameters
         com_bias_range=(-0.35/6, 0), # Range of values defining link shape
@@ -75,7 +75,7 @@ Execute the `main.py` script to generate the robot folders:
 python3 robot_generator/main.py
 ```
 
-This will generate robot folders (e.g., `robot_0`, `robot_1`, etc.) in the specified `parent_dir` (e.g., `ws/src/torque_controlled_arm/robots_p7`).
+This will generate robot folders (e.g., `robot_0`, `robot_1`, etc.) in the specified `parent_dir` (e.g., `./robots`).
 
 ### Step 3: Adapt Robots for Gazebo
 
@@ -87,14 +87,14 @@ After generation, the robots need to be adapted for Gazebo. The script for this 
 from robot_generator.gazebo.gazebo_adapter import process_robot_pack
 
 # Assuming 'output_dir' is the directory where robots were generated in Step 1
-output_dir = "ws/src/torque_controlled_arm/robots_p7"
+output_dir = "./robots"
 process_robot_pack(output_dir)
 ```
 
 **To run this adaptation:**
 
 ```bash
-python3 -c "from robot_generator.gazebo.gazebo_adapter import process_robot_pack; process_robot_pack('ws/src/torque_controlled_arm/robots_p7')"
+python3 -c "from robot_generator.gazebo.gazebo_adapter import process_robot_pack; process_robot_pack('./robots')"
 ```
 
 This process generates a `robot_GA.urdf` file within each robot's folder, making it compatible with Gazebo. The typical folder structure after this step is:
