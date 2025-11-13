@@ -1,18 +1,49 @@
 # Dynamic Parameter Estimation Project Documentation - Execution Flow Guide
 
-This document provides a concise guide on the execution flow for the Dynamic Parameter Estimation Project, focusing on the order of operations and key configurations. All files and code are located under `/root/ws` within the Docker container `mohammedelseiagy/dynamic_param_est`.
+This document provides a concise guide on the execution flow for the Dynamic Parameter Estimation Project, focusing on the order of operations and key configurations.
 
 ---
 
+## Setup: Conda Environments
+
+This project uses three Conda environments for different stages:
+
+| Environment | Purpose | YAML file |
+|------------|---------|-----------|
+| `rgen`     | Robot generation | `rgen.yml` |
+| `tgen`     | Trajectory generation | `tgen.yml` |
+| `dlenv`    | Deep learning | `dlenv.yml` |
+
+### Create the Conda environments
+
+```bash
+# Create robot generation environment
+conda env create -f rgen.yml
+
+# Create trajectory generation environment
+conda env create -f tgen.yml
+
+# Create deep learning environment
+conda env create -f dlenv.yml
+```
+
+### Activate an environment
+
+Example: activate robot generation environment
+
+```bash
+conda activate rgen
+```
+
 ## Section 1: Robot Folder Generation
 
-This section describes how to generate robot definition files. The main script for this is located in `/root/ws/robot_generator/main.py`.
+This section describes how to generate robot definition files. The main script for this is located in `robot_generator/main.py`.
 
 ### Step 1: Configure Robot Generation
 
-The primary function used is `generate_n_kinematically_constant_robots`, which calls `make_robot_arm` internally. You can find the example usage in `/root/ws/robot_generator/main.py`.
+The primary function used is `generate_n_kinematically_constant_robots`, which calls `make_robot_arm` internally. You can find the example usage in `robot_generator/main.py`.
 
-**Example Configuration in `/root/ws/robot_generator/main.py`:**
+**Example Configuration in `robot_generator/main.py`:**
 
 ```python
 from robot_generator.robot.robot_arm_pack import generate_n_kinematically_constant_robots
@@ -20,7 +51,7 @@ from robot_generator.robot.robot_arm_pack import generate_n_kinematically_consta
 def main():
     generate_n_kinematically_constant_robots(
         512, # Number of robots to generate
-        "/root/ws/src/torque_controlled_arm/robots_p7", # Output directory for robot files
+        "ws/src/torque_controlled_arm/robots_p7", # Output directory for robot files
         [15 , 7.5 , 30 , 25 , 10 , 7.5 , 10], # Link lengths
         initial_diameter_range=(6, 12), # Range for initial diameters
         com_bias_range=(-0.35/6, 0), # Range of values defining link shape
@@ -35,14 +66,14 @@ main()
 Execute the `main.py` script to generate the robot folders:
 
 ```bash
-python3 /root/ws/robot_generator/main.py
+python3 robot_generator/main.py
 ```
 
-This will generate robot folders (e.g., `robot_0`, `robot_1`, etc.) in the specified `parent_dir` (e.g., `/root/ws/src/torque_controlled_arm/robots_p7`).
+This will generate robot folders (e.g., `robot_0`, `robot_1`, etc.) in the specified `parent_dir` (e.g., `ws/src/torque_controlled_arm/robots_p7`).
 
 ### Step 3: Adapt Robots for Gazebo
 
-After generation, the robots need to be adapted for Gazebo. The script for this is located at `/root/ws/robot_generator/robot_generator/gazebo/gazebo_adapter.py`.
+After generation, the robots need to be adapted for Gazebo. The script for this is located at `robot_generator/robot_generator/gazebo/gazebo_adapter.py`.
 
 **Usage:**
 
@@ -50,14 +81,14 @@ After generation, the robots need to be adapted for Gazebo. The script for this 
 from robot_generator.gazebo.gazebo_adapter import process_robot_pack
 
 # Assuming 'output_dir' is the directory where robots were generated in Step 1
-output_dir = "/root/ws/src/torque_controlled_arm/robots_p7"
+output_dir = "ws/src/torque_controlled_arm/robots_p7"
 process_robot_pack(output_dir)
 ```
 
 **To run this adaptation:**
 
 ```bash
-python3 -c "from robot_generator.gazebo.gazebo_adapter import process_robot_pack; process_robot_pack('/root/ws/src/torque_controlled_arm/robots_p7')"
+python3 -c "from robot_generator.gazebo.gazebo_adapter import process_robot_pack; process_robot_pack('ws/src/torque_controlled_arm/robots_p7')"
 ```
 
 This process generates a `robot_GA.urdf` file within each robot's folder, making it compatible with Gazebo. The typical folder structure after this step is:
@@ -77,7 +108,7 @@ Robots_main_folder:
 
 ## Section 2: Gazebo Trajectory Generator
 
-This component automates running trajectories for the generated robots inside Gazebo with ROS, collecting raw trajectory data. The main script is `/root/ws/src/torque_controlled_arm/orchestrator/run.py`.
+This component automates running trajectories for the generated robots inside Gazebo with ROS, collecting raw trajectory data. The main script is `ws/src/torque_controlled_arm/orchestrator/run.py`.
 
 ### Step 1: Configure `settings.yaml`
 
@@ -123,7 +154,7 @@ This component automates running trajectories for the generated robots inside Ga
 Execute the orchestrator script:
 
 ```bash
-python3 /root/ws/src/torque_controlled_arm/orchestrator/run.py
+python3 ws/src/torque_controlled_arm/orchestrator/run.py
 ```
 
 This will simulate robots in Gazebo, generate trajectories, and save the raw data. The output structure for each robot will be:
@@ -140,11 +171,11 @@ output_dir:
 
 ## Section 3: Dataset Preprocessor
 
-This stage transforms raw trajectory datasets into a structured and normalized format suitable for deep learning. The main scripts are in `/root/ws/deep_learning/data_preprocessor`.
+This stage transforms raw trajectory datasets into a structured and normalized format suitable for deep learning. The main scripts are in `deep_learning/data_preprocessor`.
 
 ### Step 1: Configure Shared Paths
 
-Edit `/root/ws/deep_learning/config/shared.yaml` to define the main directories:
+Edit `deep_learning/config/shared.yaml` to define the main directories:
 
 ```yaml
 robotics_dir: "/media/raid/robots/robots_p6" # Path to robot URDFs (from Section 1)
@@ -154,7 +185,7 @@ preprocessed_dataset_dir: "/media/raid/processed_trajectories" # Output director
 
 ### Step 2: Configure Data Preprocessing Parameters
 
-Edit `/root/ws/deep_learning/config/data_preprocessing.yaml` to control preprocessing behavior:
+Edit `deep_learning/config/data_preprocessing.yaml` to control preprocessing behavior:
 
 ```yaml
 initial_naming_index: 5632
@@ -181,27 +212,27 @@ After `jacob.py` has run for at least one robot, use `features_analyzer.py` to i
 
 ```bash
 # Replace with an actual path to a generated segment CSV, e.g., from preprocessed_dataset_dir/robot_X/trajectory_data_segment_0.csv
-python3 /root/ws/deep_learning/data_preprocessor/features_analyzer.py --csv_path /path/to/your/trajectory_data_segment_0.csv --update_raw_yaml True
+python3 deep_learning/data_preprocessor/features_analyzer.py --csv_path /path/to/your/trajectory_data_segment_0.csv --update_raw_yaml True
 ```
 
-This generates `raw_feature_analysis.yaml` (used by other scripts) and `humanized_feature_analysis.yaml` in `/root/ws/deep_learning/config/data_preprocessor`.
+This generates `raw_feature_analysis.yaml` (used by other scripts) and `humanized_feature_analysis.yaml` in `deep_learning/config/data_preprocessor`.
 
 ### Step 4: Analyze Dynamic Parameters
 
 Run `output_analyzer.py` to determine which dynamic parameters are truly varying based on the feature analysis:
 
 ```bash
-python3 /root/ws/deep_learning/data_preprocessor/output_analyzer.py
+python3 deep_learning/data_preprocessor/output_analyzer.py
 ```
 
-This creates `dynamic_parameters_analysis.yaml` in `/root/ws/deep_learning/config/data_preprocessor`.
+This creates `dynamic_parameters_analysis.yaml` in `deep_learning/config/data_preprocessor`.
 
 ### Step 5: Run Jacobian and Feature Engineering
 
 Execute `jacob.py` to resample trajectories, compute Jacobians, and filter initial data:
 
 ```bash
-python3 /root/ws/deep_learning/data_preprocessor/jacob.py
+python3 deep_learning/data_preprocessor/jacob.py
 ```
 
 This script processes robots based on `robot_range` in `data_preprocessing.yaml` and saves segmented trajectory data and dynamic parameters in the `preprocessed_dataset_dir`.
@@ -211,20 +242,20 @@ This script processes robots based on `robot_range` in `data_preprocessing.yaml`
 Execute `dynamic_normalizer.py` to apply min-max normalization to the dynamic parameters across all robots:
 
 ```bash
-python3 /root/ws/deep_learning/data_preprocessor/dynamic_normalizer.py
+python3 deep_learning/data_preprocessor/dynamic_normalizer.py
 ```
 
-This saves `dynamic_parameters_normalized.csv` for each robot in its preprocessed folder and `dynamic_param_normalization.yml` (containing normalization criteria) in `/root/ws/deep_learning/config/data_preprocessor`.
+This saves `dynamic_parameters_normalized.csv` for each robot in its preprocessed folder and `dynamic_param_normalization.yml` (containing normalization criteria) in `deep_learning/config/data_preprocessor`.
 
 ---
 
 ## Section 4: Deep Learning and Dataset Caching
 
-This stage handles loading preprocessed datasets, caching them, training deep learning models (Transformer or Mamba), and saving checkpoints. The main training script is `/root/ws/deep_learning/deep_learning/main.py`.
+This stage handles loading preprocessed datasets, caching them, training deep learning models (Transformer or Mamba), and saving checkpoints. The main training script is `deep_learning/deep_learning/main.py`.
 
 ### Step 1: Configure Deep Learning Parameters
 
-Edit `/root/ws/deep_learning/config/deep_learning.yaml`. Key parameters include:
+Edit `deep_learning/config/deep_learning.yaml`. Key parameters include:
 
 #### Global
 *   **`seed`**: Random seed for reproducibility.
@@ -260,7 +291,7 @@ Edit `/root/ws/deep_learning/config/deep_learning.yaml`. Key parameters include:
 Execute the main training script:
 
 ```bash
-python3 /root/ws/deep_learning/deep_learning/main.py
+python3 deep_learning/deep_learning/main.py
 ```
 
 This script will:
